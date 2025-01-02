@@ -76,13 +76,15 @@ export default function Index() {
     }
   };
 
+  const PORT = 3000
+
   return (
     <div className="font-sans max-w-3xl mx-auto p-5">
       <h1 className="text-2xl font-bold mb-4 text-center">Yidam Chat</h1>
       {!showChat && (
         <div className="text-center mb-5">
           <QRCodeSVG 
-            value={`http://${ip}:3000?ip=${ip}&interface=chat`} 
+            value={`http://${ip}:${PORT}/if?ip=${ip}&interface=chat`} 
             size={256} 
             className="mx-auto mb-4"
           />
