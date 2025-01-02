@@ -1,0 +1,21 @@
+/* Ensure Tailwind CSS is installed and configured correctly */
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+html,
+body {
+  background-color: white;
+}
+
+/* html.dark,
+body.dark {
+  background-color: #1a202c; 
+}
+
+@media (prefers-color-scheme: dark) {
+  html,
+  body {
+    color-scheme: dark;
+  }
+} */
