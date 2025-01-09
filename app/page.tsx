@@ -1,101 +1,144 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { QRCodeSVG } from 'qrcode.react';
+
+export default function Index() {
+  const searchParams = useSearchParams();
+  const [messages, setMessages] = useState<{ sender: string; content: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [showChat, setShowChat] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const chatRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const PORT_SERVER = 3001;
+
+  const isChat = searchParams.get('interface') === 'chat';
+  const IP = window.location.href.split('/')[2].split(':')[0];
+  // const IP = '192.168.86.93';
+
+  useEffect(() => {
+    if (isChat) {
+      setShowChat(true);
+    }
+
+    if (IP) {
+      wsRef.current = new WebSocket(`ws://${IP}:${PORT_SERVER}/ws`);
+      console.log('Connecting to:', `ws://${IP}:${PORT_SERVER}/ws`);
+
+      wsRef.current.onopen = () => {
+        console.log('WebSocket connected');
+        setIsConnected(true);
+      };
+
+      wsRef.current.onmessage = (event) => {
+        const data = event.data;
+        
+        if (data === "[START]") {
+          setMessages(prev => [...prev, { sender: 'LLM', content: '' }]);
+        } else if (data === "[END]") {
+          // Do nothing
+        } else {
+          setMessages(prev => {
+            if (prev.length === 0) return prev;
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1].content += data;
+            return newMessages;
+          });
+        }
+      };
+
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+  
+      wsRef.current.onclose = (event) => {
+        console.log('WebSocket closed:', event.code, event.reason);
+        setIsConnected(false);
+      };
+    }
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [IP, isChat]);
+
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const sendMessage = () => {
+    if (input && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      setMessages(prev => [...prev, { sender: 'You', content: input }]);
+      console.log('Sending:', input);
+      wsRef.current.send(input);
+      console.log('Sent:', input);
+      setInput('');
+    } else if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket is not connected');
+    }
+  };
+
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      sendMessage();
+    }
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="font-sans max-w-3xl mx-auto p-5">
+      <h1 className="text-2xl font-bold mb-4 text-center">Yidam Chat</h1>
+      {!showChat && (
+        <div className="text-center mb-5">
+          <QRCodeSVG 
+            value={`http://${IP}:${PORT_SERVER}/?interface=chat`} 
+            size={256} 
+            className="mx-auto mb-4"
+          />
+          <button 
+            onClick={() => setShowChat(true)}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Simulate QR Code Scan
+          </button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
+      {showChat && (
+        <div className="flex flex-col h-[500px]">
+          <div className="mb-2">
+            Connection status: {isConnected ? 'Connected' : 'Disconnected'}
+          </div>
+          <div ref={chatRef} className="flex-grow overflow-y-auto border border-gray-300 p-3 mb-3">
+            {messages.map((message, index) => (
+              <div key={index} className="mb-2">
+                <span className="font-bold">{message.sender}:</span> {message.content}
+              </div>
+            ))}
+          </div>
+          <div className="flex">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Type your message..."
+              className="flex-grow border border-gray-300 p-2 mr-2"
+            />
+            <button 
+              onClick={sendMessage}
+              disabled={!isConnected}
+              className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${!isConnected && 'opacity-50 cursor-not-allowed'}`}
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
