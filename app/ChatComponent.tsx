@@ -96,8 +96,8 @@ export default function ChatComponent() {
       {!showChat && (
         <div className="text-center mb-5">
           <QRCodeSVG 
-            key={`http://${IP}:${PORT_SERVER}/?interface=chat`}
-            value={`http://${IP}:${PORT_SERVER}/?interface=chat`} 
+            key={`http://${IP}:${PORT_SERVER}/web/?interface=chat`}
+            value={`http://${IP}:${PORT_SERVER}/web/?interface=chat`} 
             size={256} 
             className="mx-auto mb-4"
           />
