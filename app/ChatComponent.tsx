@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic'
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function ChatComponent() {
   const searchParams = useSearchParams();
@@ -13,7 +13,6 @@ export default function ChatComponent() {
   const chatRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const PORT_SERVER = 3001;
-  const QRCodeSVG = dynamic(() => import('qrcode.react').then(mod => mod.QRCodeSVG), { ssr: false })
 
   const isChat = searchParams.get('interface') === 'chat';
   const IP = typeof window !== 'undefined' ? window.location.href.split('/')[2].split(':')[0] : '';
@@ -95,8 +94,7 @@ export default function ChatComponent() {
       {!showChat && (
         <div className="text-center mb-5">
           <QRCodeSVG 
-            key={`http://${IP}:${PORT_SERVER}/web/?interface=chat`}
-            value={`http://${IP}:${PORT_SERVER}/web/?interface=chat`} 
+            value={`http://${IP}:${PORT_SERVER}/?interface=chat`} 
             size={256} 
             className="mx-auto mb-4"
           />
