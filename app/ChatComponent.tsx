@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic'
-import ClientOnly from './ClientOnly'
 
 export default function ChatComponent() {
   const searchParams = useSearchParams();
@@ -92,7 +91,7 @@ export default function ChatComponent() {
   };
 
   return (
-    <ClientOnly>
+    <>
       {!showChat && (
         <div className="text-center mb-5">
           <QRCodeSVG 
@@ -140,6 +139,6 @@ export default function ChatComponent() {
           </div>
         </div>
       )}
-    </ClientOnly>
+    </>
   );
 }
